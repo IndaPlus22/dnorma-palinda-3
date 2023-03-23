@@ -1,19 +1,60 @@
 package main
-
+//Average runtime: 21.49ms
+//Total runtime: 2149 ms
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"regexp"
+	"strings"
+	"sync"
 	"time"
 )
 
 const DataFile = "loremipsum.txt"
 
 // Return the word frequencies of the text argument.
-//
-// Split load optimally across processor cores.
 func WordCount(text string) map[string]int {
-	freq := make(map[string]int)
-	// ...
-	return freq
+	cleanText := regexp.MustCompile("[[:punct:]]").ReplaceAllString(text, "")
+	words := strings.Fields(strings.ToLower(cleanText))
+
+	numGoroutines := 10
+	partialSize := (len(words) + numGoroutines - 1) / numGoroutines
+
+	freqs := make(map[string]int)
+	ch := make(chan map[string]int, numGoroutines)	
+
+	wg := new(sync.WaitGroup)
+	wg.Add(numGoroutines)
+	
+	for i:=0; i < numGoroutines; i++{
+		start := i * partialSize
+		stop := (i + 1) * partialSize	
+
+		if stop > len(words){
+			stop = len(words)
+		}
+		go func(slice []string){
+			partialFreq := make(map[string]int)
+			for _, word := range slice {
+				partialFreq[word]++
+			}
+			ch <- partialFreq
+			wg.Done()
+		}(words[start:stop])
+
+	}
+	go func(){
+		for{
+			partialFreq := <-ch
+			for word, count := range partialFreq{
+				freqs[word] += count
+			}
+
+		}
+	}()
+	wg.Wait()
+	return freqs
 }
 
 // Benchmark how long it takes to count word frequencies in text numRuns times.
@@ -39,6 +80,11 @@ func printResults(runtimeMillis int64, numRuns int) {
 
 func main() {
 	// read in DataFile as a string called data
+	data, err := ioutil.ReadFile(DataFile)
+	if err != nil{
+		log.Fatal(err)
+	}
+	fmt.Printf("%#v", WordCount(string(data)))
 
 	numRuns := 100
 	runtimeMillis := benchmark(string(data), numRuns)
