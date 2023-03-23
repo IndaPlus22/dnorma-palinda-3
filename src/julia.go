@@ -1,5 +1,7 @@
-// Original runtime:  10.105s
+// Original runtime:  real    0m10.072s		user	0m10.134s		sys     0m0.038s
 
+
+//Runtime now: real    0m2.068s		user    0m13.199s		sys     0m0.105s
 
 // This program creates pictures of Julia sets (en.wikipedia.org/wiki/Julia_set).
 package main
@@ -11,7 +13,9 @@ import (
 	"log"
 	"math/cmplx"
 	"os"
+	"runtime"
 	"strconv"
+	"sync"
 )
 
 type ComplexFunc func(complex128) complex128
@@ -52,15 +56,23 @@ func Julia(f ComplexFunc, n int) image.Image {
 	bounds := image.Rect(-n/2, -n/2, n/2, n/2)
 	img := image.NewRGBA(bounds)
 	s := float64(n / 4)
+
+	var wg sync.WaitGroup
 	for i := bounds.Min.X; i < bounds.Max.X; i++ {
-		for j := bounds.Min.Y; j < bounds.Max.Y; j++ {
-			n := Iterate(f, complex(float64(i)/s, float64(j)/s), 256)
-			r := uint8(0)
-			g := uint8(0)
-			b := uint8(n % 32 * 8)
-			img.Set(i, j, color.RGBA{r, g, b, 255})
-		}
+		wg.Add(1)
+		go func(i int){
+			defer wg.Done()
+			for j := bounds.Min.Y; j < bounds.Max.Y; j++ {
+				n := Iterate(f, complex(float64(i)/s, float64(j)/s), 256)
+				r := uint8(0)
+				g := uint8(0)
+				b := uint8(n % 32 * 8)
+				img.Set(i, j, color.RGBA{r, g, b, 255})
+			}
+		}(i)
+		
 	}
+	wg.Wait()
 	return img
 }
 
@@ -74,4 +86,8 @@ func Iterate(f ComplexFunc, z complex128, max int) (n int) {
 		z = f(z)
 	}
 	return
+}
+func init() {
+    numcpu := runtime.NumCPU()
+    runtime.GOMAXPROCS(numcpu) // Try to use all available CPUs.
 }
