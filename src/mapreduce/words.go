@@ -1,4 +1,5 @@
 package main
+
 //Average runtime: 21.49ms
 //Total runtime: 2149 ms
 import (
@@ -22,19 +23,19 @@ func WordCount(text string) map[string]int {
 	partialSize := (len(words) + numGoroutines - 1) / numGoroutines
 
 	freqs := make(map[string]int)
-	ch := make(chan map[string]int, numGoroutines)	
+	ch := make(chan map[string]int, numGoroutines)
 
 	wg := new(sync.WaitGroup)
 	wg.Add(numGoroutines)
-	
-	for i:=0; i < numGoroutines; i++{
-		start := i * partialSize
-		stop := (i + 1) * partialSize	
 
-		if stop > len(words){
+	for i := 0; i < numGoroutines; i++ {
+		start := i * partialSize
+		stop := (i + 1) * partialSize
+
+		if stop > len(words) {
 			stop = len(words)
 		}
-		go func(slice []string){
+		go func(slice []string) {
 			partialFreq := make(map[string]int)
 			for _, word := range slice {
 				partialFreq[word]++
@@ -44,10 +45,10 @@ func WordCount(text string) map[string]int {
 		}(words[start:stop])
 
 	}
-	go func(){
-		for{
+	go func() {
+		for {
 			partialFreq := <-ch
-			for word, count := range partialFreq{
+			for word, count := range partialFreq {
 				freqs[word] += count
 			}
 
@@ -81,7 +82,7 @@ func printResults(runtimeMillis int64, numRuns int) {
 func main() {
 	// read in DataFile as a string called data
 	data, err := ioutil.ReadFile(DataFile)
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%#v", WordCount(string(data)))

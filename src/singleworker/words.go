@@ -1,14 +1,15 @@
 package main
+
 //Average runtime: 24.33 ms
 //Total runtime: 2433 ms
 
 import (
 	"fmt"
-	"regexp"
-	"time"
-	"strings"
 	"io/ioutil"
 	"log"
+	"regexp"
+	"strings"
+	"time"
 )
 
 const DataFile = "loremipsum.txt"
@@ -17,10 +18,10 @@ const DataFile = "loremipsum.txt"
 func WordCount(text string) map[string]int {
 	cleanText := regexp.MustCompile("[[:punct:]]").ReplaceAllString(text, "")
 	freqs := make(map[string]int)
-	
+
 	words := strings.Fields(strings.ToLower(cleanText))
 
-	for _, word := range words{
+	for _, word := range words {
 		freqs[word]++
 	}
 	return freqs
@@ -50,7 +51,7 @@ func printResults(runtimeMillis int64, numRuns int) {
 func main() {
 	// read in DataFile as a string called data
 	data, err := ioutil.ReadFile(DataFile)
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%#v", WordCount(string(data)))

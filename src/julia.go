@@ -1,6 +1,5 @@
 // Original runtime:  real    0m10.072s		user	0m10.134s		sys     0m0.038s
 
-
 //Runtime now: real    0m2.068s		user    0m13.199s		sys     0m0.105s
 
 // This program creates pictures of Julia sets (en.wikipedia.org/wiki/Julia_set).
@@ -60,7 +59,7 @@ func Julia(f ComplexFunc, n int) image.Image {
 	var wg sync.WaitGroup
 	for i := bounds.Min.X; i < bounds.Max.X; i++ {
 		wg.Add(1)
-		go func(i int){
+		go func(i int) {
 			defer wg.Done()
 			for j := bounds.Min.Y; j < bounds.Max.Y; j++ {
 				n := Iterate(f, complex(float64(i)/s, float64(j)/s), 256)
@@ -70,7 +69,7 @@ func Julia(f ComplexFunc, n int) image.Image {
 				img.Set(i, j, color.RGBA{r, g, b, 255})
 			}
 		}(i)
-		
+
 	}
 	wg.Wait()
 	return img
@@ -88,6 +87,6 @@ func Iterate(f ComplexFunc, z complex128, max int) (n int) {
 	return
 }
 func init() {
-    numcpu := runtime.NumCPU()
-    runtime.GOMAXPROCS(numcpu) // Try to use all available CPUs.
+	numcpu := runtime.NumCPU()
+	runtime.GOMAXPROCS(numcpu) // Try to use all available CPUs.
 }
