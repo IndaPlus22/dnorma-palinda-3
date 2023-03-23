@@ -29,3 +29,7 @@ What happens if you remove the default-case from the case-statement in the `main
 ##### A:
 If the array of names instead was even in length, it would be a deadlock. This happens because the select statement in main will wait for data from the channel match (this data will never come since everyone has received a message).
 
+|Variant       | Runtime (ms) |
+| ------------ | ------------:|
+| singleworker |     2433     |
+| mapreduce    |     2149     |
