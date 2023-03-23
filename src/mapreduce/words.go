@@ -31,10 +31,10 @@ func WordCount(text string) map[string]int {
 	for i := 0; i < numGoroutines; i++ {
 		start := i * partialSize
 		stop := (i + 1) * partialSize
-
 		if stop > len(words) {
 			stop = len(words)
 		}
+
 		go func(slice []string) {
 			partialFreq := make(map[string]int)
 			for _, word := range slice {
@@ -43,18 +43,34 @@ func WordCount(text string) map[string]int {
 			ch <- partialFreq
 			wg.Done()
 		}(words[start:stop])
-
 	}
-	go func() {
-		for {
-			partialFreq := <-ch
-			for word, count := range partialFreq {
-				freqs[word] += count
-			}
 
-		}
+	done := false
+	go func() {
+		wg.Wait()
+		close(ch)
+		done = true
 	}()
-	wg.Wait()
+
+	for {
+		partialFreq := <-ch
+		for word, count := range partialFreq {
+			freqs[word] += count
+		}
+		if(done){
+			break
+		}
+	}
+	// This is faster, but sometimes leads to concurrent map read and map write :/
+	// go func() {
+	// 	for {
+	// 		partialFreq := <-ch
+	// 		for word, count := range partialFreq {
+	// 			freqs[word] += count
+	// 		}
+
+	// 	}
+	// }()
 	return freqs
 }
 
